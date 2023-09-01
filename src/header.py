@@ -28,11 +28,28 @@ def conectarBanco():
     )
     return conexao
 
+def usuarioLojista(cpf):
+    conexao = conectarBanco()
+    cur = conexao.cursor()
+    
+    cur.execute("select * from usuarios where cpf_cnpj = %s and lojista = true", (cpf,))
+    usuario = cur.fetchone()
+    #Verifica se existe um usuário com o mesmo CPF ou e-mail
+    if usuario:
+        cur.close()
+        conexao.close()
+        return True
+    else:
+        cur.close()
+        conexao.close()
+        return False
+
 def criarUsuario(usuario):
     conexao = conectarBanco()
     cur = conexao.cursor()
     
     cur.execute("insert into usuarios (nome, cpf_cnpj, email, senha, lojista) values (%s, %s, %s, %s, %s)", (usuario.nome, usuario.cpf, usuario.email, usuario.senha, usuario.lojista))
+    cur.execute("insert into saldo (id_usuario, saldo) values (%s, %s)", (usuario.cpf, 0))
     
     # Comitar a inserção de usuário e fechar a conexão
     conexao.commit()    
@@ -113,10 +130,10 @@ def transferir(valor):
                 saldo = cur.fetchone()
                 if saldo:
                     cur.execute("update saldo set saldo = saldo + %s where id_usuario = %s", (valor.valor, valor.cpf_destino))
-                    cur.execute("insert into transferencias (log_transferencia) values (%s)", ("Transferência de " + valor.cpf_origem + " para " + valor.cpf_destino + " no valor de " + str(valor.valor),))
+                    
                 else:
                     cur.execute("insert into saldo (id_usuario, saldo) values (%s, %s)", (valor.cpf_destino, valor.valor))
-                    cur.execute("insert into transferencias (log_transferencia) values (%s)", ("Transferência de " + valor.cpf_origem + " para " + valor.cpf_destino + " no valor de " + str(valor.valor),))
+                    
         else:
             cur.close()
             conexao.close()

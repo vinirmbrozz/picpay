@@ -18,7 +18,7 @@ def usuario(usuario: Usuario):
             return {"return": "Usuário criado"}
         
     except Exception as e:
-        raise HTTPException(status_code=400, detail="Erro ao criar usuário: " + e)
+        raise HTTPException(status_code=400, detail="Erro ao criar usuário: " + str(e))
 
 
 @app.post("/depositar")
@@ -37,6 +37,11 @@ def deposito(valor: Saldo):
 @app.post("/transferir")
 def transferencia(valor: Transferencia):
     try:
+        #Verifica se o usuário de origem(que vai enviar o dinheiro), é lojista, se for, não pode transferir
+        Lojista = usuarioLojista(valor.cpf_origem)
+        if Lojista:
+            return HTTPException(status_code=400, detail="Usuário lojista não pode realizar transferência")
+        
         #Verifica se existe um usuário com o mesmo CPF ou e-mail
         usuarioOrigem = jaExisteUsuario(valor.cpf_origem, "")
         usuarioDestino = jaExisteUsuario(valor.cpf_destino, "")
